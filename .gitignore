@@ -1,0 +1,5 @@
+*.o
+*.idb
+*.dll
+*.exp
+*.lib
