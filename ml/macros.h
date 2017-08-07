@@ -137,6 +137,10 @@ enum // ECodePage
 #define FLAG_ON(_V, _F)     (!!((_V) & (_F)))
 #define FLAG_OFF(_V, _F)     (!FLAG_ON(_V, _F))
 
+//TODO: figure out what this actually is
+#define FLAG_ON_ALL FLAG_ON
+
+
 #if !defined(TEST_BIT)
     #define TEST_BIT(value, bit) ((value) & (1 << bit))
 #endif /* TEST_BIT */

@@ -68,22 +68,11 @@ typedef HANDLE64 *PHANDLE64;
 #include "ml/misc.h"
 
 #include "ml/apihelper.h"
-#include "ml/console.h"
-//#include "Hook.h"
 #include "ml/image.h"
-#include "ml/audio.h"
-#include "ml/compression.h"
-//#include "ml/apphelp.h"
 
 #include "ml/peimage.h"
 #include "ml/fileio.h"
 #include "ml/ldasm.h"
-
-#if ML_SUPPORT_LAMBDA
-
-#include "ml/dbghelper.h"
-
-#endif // ML_SUPPORT_LAMBDA
 
 // class
 
@@ -93,15 +82,10 @@ typedef HANDLE64 *PHANDLE64;
 ML_NAMESPACE
 
 #include "ml/traits.h"
-#include "ml/object.h"
-#include "ml/policy.h"
 #include "ml/pointer.h"
-#include "ml/safewintypes.h"
-//#include "ml/function.h"
 
 #include "ml/vector.hpp"
 #include "ml/mlstring.h"
-#include "ml/hashtable.h"
 #include "ml/mlnativeapi.h"
 
 ML_NAMESPACE_END;
@@ -109,7 +93,6 @@ ML_NAMESPACE_END;
 #include "ml/patchmemory.h"
 #include "ml/sunday.h"
 #include "ml/acautomation.h"
-#include "ml/searchpattern.h"
 
 #endif // CPP_DEFINED
 

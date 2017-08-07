@@ -1,6 +1,0 @@
-#ifndef _NTMODULE_H_da9e04cd_9069_411f_8914_6b5fce052ca8_
-#define _NTMODULE_H_da9e04cd_9069_411f_8914_6b5fce052ca8_
-
-
-
-#endif // _NTMODULE_H_da9e04cd_9069_411f_8914_6b5fce052ca8_

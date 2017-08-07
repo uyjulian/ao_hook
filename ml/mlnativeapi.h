@@ -3,22 +3,16 @@
 
 #if CPP_DEFINED
 
-
 ML_NAMESPACE_BEGIN(Native)
-
 
 #include "ml/mlntldr.h"
 #include "ml/mlntmemory.h"
 #include "ml/mlntrtl.h"
 #include "ml/mlntnls.h"
-#include "ml/mlstring.2.h"
 #include "ml/mlntregistry.h"
 #include "ml/mlntexception.h"
 #include "ml/mlntrpc.h"
 #include "ml/mlntfileio.h"
-#include "ml/mlntobject.h"
-#include "ml/mlntgdi.h"
-
 
 ML_NAMESPACE_END_(Native);
 
