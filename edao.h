@@ -4,6 +4,7 @@
 #define DIRECTINPUT_VERSION 0x800
 
 #include "ml/mylibrary.h"
+// #include "Aki.h"
 #include <GdiPlus.h>
 #include <dinput.h>
 
@@ -16,25 +17,48 @@
     #define DebugPrint(...) { AllocConsole(); PrintConsoleW(__VA_ARGS__); PrintConsoleW(L"\n"); }
 #endif
 
+#pragma warning (disable: 4201)
+#pragma warning (disable: 4996)
+
 ML_OVERLOAD_NEW
 
 class EDAO;
 class CGlobal;
+class CScript;
+class CSSaveData;
 class CBattle;
+
+class CMap;
+class CInput;
+class CSound;
+class CCamera;
+class CMiniGame;
+class CDebug;
+
+#define CActor CSSaveData
 
 #define INIT_STATIC_MEMBER(x) DECL_SELECTANY TYPE_OF(x) x = nullptr
 #define DECL_STATIC_METHOD_POINTER(cls, method) static TYPE_OF(&cls::method) Stub##method
 #define DETOUR_METHOD(cls, method, addr, ...) TYPE_OF(&cls::method) (method); *(PULONG_PTR)&(method) = addr; return (this->*method)(__VA_ARGS__)
-
+#define DECL_METHOD_POINTER_AND_INIT(cls, method, addr) TYPE_OF(&cls::method) Stub##method; *(PULONG_PTR)&(Stub##method) = addr
+#define READONLY_PROPERTY(type, var) __declspec(property(get = Get##var)) type var; type Get##var()
 
 #define MINIMUM_CUSTOM_CHAR_ID          0xB0
 #define MINIMUM_CUSTOM_CRAFT_INDEX      0x3E8
 #define MAXIMUM_CHR_NUMBER_IN_BATTLE    0x16
+#define MAXIMUM_CHR_NUMBER_WITH_STATUS  0xC
+#define SCENA_FLAG_SIZE                 0x220
 #define AVATAR_CHR_POSITION             0x14
 
+#define STATUS_LEVEL_MIN       45
+#define STATUS_LEVEL_MAX       150
 
 #define PSP_WIDTH_F                       480.f
 #define PSP_HEIGHT_F                      272.f
+
+BOOL Initialize_ex(PVOID BaseAddress);
+
+DECL_SELECTANY TYPE_OF(&GetAsyncKeyState) StubGetAsyncKeyState;
 
 #pragma pack(push, 1)
 
@@ -78,14 +102,81 @@ ML_NAMESPACE_BEGIN(CraftConditions)
 
     static const ULONG_PTR Stealth             = 0x04000000;
     static const ULONG_PTR ArtsReflect         = 0x08000000;
+    static const ULONG_PTR Reserve_1           = 0x10000000;
     static const ULONG_PTR Boost               = 0x10000000;
-    static const ULONG_PTR CraftReflect        = 0x20000000;
+    static const ULONG_PTR BurningHeart        = 0x10000000;
     static const ULONG_PTR Reserve_2           = 0x20000000;
+    static const ULONG_PTR CraftReflect        = 0x20000000;
+    static const ULONG_PTR Reserve_3           = 0x40000000;
     static const ULONG_PTR GreenPepper         = 0x40000000;
+    static const ULONG_PTR BodyAbnormal        = 0x40000000;
+
     static const ULONG_PTR Dead                = 0x80000000;
+
+    static const SHORT BodyAbnormal_Little = 0x2;
+    static const SHORT BodyAbnormal_GreenPepper = 0x3;
 
 ML_NAMESPACE_END
 
+ML_NAMESPACE_BEGIN(BattleActionScript)
+enum
+{
+    SysCraft_Init           = 0x00,
+    SysCraft_Stand          = 0x01,
+    SysCraft_Move           = 0x02,
+    SysCraft_UnderAttack    = 0x03,
+    SysCraft_Dead           = 0x04,
+    SysCraft_NormalAttack   = 0x05,
+    SysCraft_ArtsAria       = 0x06,
+    SysCraft_ArtsCast       = 0x07,
+    SysCraft_Win            = 0x08,
+    SysCraft_EnterBattle    = 0x09,
+    SysCraft_UseItem        = 0x0A,
+    SysCraft_Stun           = 0x0B,
+    SysCraft_Unknown2       = 0x0C,
+    SysCraft_Reserve1       = 0x0D,
+    SysCraft_Reserve2       = 0x0E,
+    SysCraft_Counter        = 0x0F,
+    SysCraft_TeamRushInit   = 0x1E,
+    SysCraft_TeamRushAction = 0x1F,
+
+    INVALID_ACTION_OFFSET   = 0xFFFF,
+    EMPTY_ACTION            = INVALID_ACTION_OFFSET,
+};
+ML_NAMESPACE_END
+
+ML_NAMESPACE_BEGIN(T_NAME)
+enum
+{
+    Lloyd       = 0x0,
+    Elie        = 0x1,
+    Tio         = 0x2,
+    Randy       = 0x3,
+
+    Lazy        = 0x4,
+    Waji        = 0x4,
+
+    Yin         = 0x5,
+    Rixia       = 0x5,
+    INNE        = 0x5,
+
+    Zeit        = 0x6,
+    Arios       = 0x7,
+    Noel        = 0x8,
+    Dudley      = 0x9,
+    Garcia      = 0xA,
+    ReserveB    = 0xB,
+    CHR_COUNT   = 0xC,
+};
+
+DECL_SELECTANY
+char* lpChrName[] = {"Lloyd", "Elie", "Tio", "Randy", "Lazy", "Yin/Rixia", "Zeit", "Arios", "Noel", "Dudley", "Garcia", "ReserveB"};
+DECL_SELECTANY
+char* lpChrNameChs[] = {"罗伊德", "艾莉", "缇欧", "兰迪", "瓦吉", "银/莉夏", "神狼蔡特", "亚里欧斯", "诺艾尔上士", "达德利搜查官", "加尔西亚", "保留B"};
+DECL_SELECTANY
+WCHAR* lpwChrNameChs[] = {L"罗伊德", L"艾莉", L"缇欧", L"兰迪", L"瓦吉", L"银/莉夏", L"神狼蔡特", L"亚里欧斯", L"诺艾尔上士", L"达德利搜查官", L"加尔西亚", L"保留B"};
+
+ML_NAMESPACE_END
 
 typedef struct  // 0x18
 {
@@ -168,43 +259,119 @@ typedef union
 
     struct
     {
-        ULONG                   MaximumHP;                  // 0x234
-        ULONG                   InitialHP;                  // 0x238
-        USHORT                  Level;                      // 0x23C
-        USHORT                  MaximumEP;                  // 0x23E
-        USHORT                  InitialEP;                  // 0x240
-        USHORT                  InitialCP;                  // 0x242
-        USHORT                  EXP;                        // 0x244
+        ULONG                   MaximumHP;                  // 0x0     0x234    0x268
+        ULONG                   InitialHP;                  // 0x4     0x238    0x26C
+        USHORT                  Level;                      // 0x8     0x23C    0x270
+        USHORT                  MaximumEP;                  // 0xA     0x23E    0x272
+        USHORT                  InitialEP;                  // 0xC     0x240    0x274
+        USHORT                  InitialCP;                  // 0xE     0x242    0x276
+        ULONG                   EXP;                        // 0x10    0x244    0x278
+        //DUMMY_STRUCT(2);
 
-        DUMMY_STRUCT(2);
-
-        SHORT                   STR;                        // 0x248
-        SHORT                   DEF;                        // 0x24A
-        SHORT                   ATS;                        // 0x24C
-        SHORT                   ADF;                        // 0x24E
-        SHORT                   DEX;                        // 0x250
-        SHORT                   AGL;                        // 0x252
-        SHORT                   MOV;                        // 0x254
-        SHORT                   SPD;                        // 0x256
-        SHORT                   DEXRate;                    // 0x258
-        SHORT                   AGLRate;                    // 0x25A
-        USHORT                  MaximumCP;                  // 0x25C
+        SHORT                   STR;                        // 0x14    0x248    0x27C
+        SHORT                   DEF;                        // 0x16    0x24A    0x27E
+        SHORT                   ATS;                        // 0x18    0x24C    0x280
+        SHORT                   ADF;                        // 0x1A    0x24E    0x282
+        SHORT                   DEX;                        // 0x1C    0x250    0x284
+        SHORT                   AGL;                        // 0x1E    0x252    0x286
+        SHORT                   MOV;                        // 0x20    0x254    0x288
+        SHORT                   SPD;                        // 0x22    0x256    0x28A
+        SHORT                   DEXRate;                    // 0x24    0x258    0x28C
+        SHORT                   AGLRate;                    // 0x26    0x25A    0x28E
+        USHORT                  MaximumCP;                  // 0x28    0x25C    0x290
 
         DUMMY_STRUCT(2);                                    // 0x25E
 
-        SHORT                   RNG;                        // 0x260
+        USHORT                  RNG;                        // 0x2C    0x260    0x294
 
         DUMMY_STRUCT(2);
 
-        ULONG                   ConditionFlags;             // 0x264
+        ULONG                   ConditionFlags;             // 0x30    0x264    0x298
+    };
+
+    struct  
+    {
+        ULONG                   HPMax;                      // 0x0     0x234    0x268
+        ULONG                   HP;                         // 0x4     0x238    0x26C
     };
 
 } CHAR_STATUS, *PCHAR_STATUS;
+
+typedef struct _CHAR_T_STATUS_ORG   // 0x18
+{
+    USHORT      Level;
+    USHORT      HP;
+    USHORT      EP;
+    SHORT       STR;
+    SHORT       DEF;
+    SHORT       ATS;
+    SHORT       ADF;
+    SHORT       DEX;
+    SHORT       AGL;
+    SHORT       AGLRate;
+    SHORT       MOV;
+    SHORT       SPD;
+} CHAR_T_STATUS_ORG, *PCHAR_T_STATUS_ORG;
+
+typedef struct _CHAR_T_STATUS
+{
+    //USHORT      Level;
+    UINT        HP;
+    //USHORT      HP;
+    USHORT      EP;
+    SHORT       STR;
+    SHORT       DEF;
+    SHORT       ATS;
+    SHORT       ADF;
+    SHORT       DEX;
+    SHORT       AGL;
+    SHORT       AGLRate;
+    SHORT       MOV;
+    SHORT       SPD;
+    SHORT       DEXRate;
+    USHORT      RNG;
+    USHORT      Level;
+} CHAR_T_STATUS, *PCHAR_T_STATUS;
+
+typedef struct _CHAR_T_STATUS_RatioX
+{
+    float      HP;
+    float      EP;
+    float      STR;
+    float      DEF;
+    float      ATS;
+    float      ADF;
+    float      DEX;
+    float      AGL;
+    float      MOV;
+    float      SPD;
+    float      DEXRate;
+    float      AGLRate;
+    float      RNG;
+} CHAR_T_STATUS_RatioX;
+
+typedef struct _CHAR_T_STATUS_RatioY
+{
+    INT      HP;
+    INT      EP;
+    INT      STR;
+    INT      DEF;
+    INT      ATS;
+    INT      ADF;
+    INT      DEX;
+    INT      AGL;
+    INT      MOV;
+    INT      SPD;
+    INT      DEXRate;
+    INT      AGLRate;
+    INT      RNG;
+} CHAR_T_STATUS_RatioY;
 
 typedef struct
 {
     ULONG               ConditionFlags;
     PVOID               Effect;
+    //BYTE                Type; // 1 回合; 2 次数; 3 AT条动多少次; 4 永久
     BYTE                CounterType;
     BYTE                Flags;
     SHORT               ConditionRate;
@@ -213,6 +380,7 @@ typedef struct
 
     enum CounterTypes
     {
+        ByAT        = 0,
         ByRounds    = 1,
         ByTimes     = 2,
         ByActions   = 3,
@@ -229,10 +397,16 @@ enum
     CHR_FLAG_EMPTY  = 0x8000,
 };
 
+enum
+{
+    CHR_FLAG2_ResistBeatBack    = 0x0200,
+    CHR_FLAG2_ResistATDelay     = 0x0800,
+    //CHR_FLAG2_AbsoluteMiss      = 0x2000,
+};
+
 typedef union BattleCtrlData
 {
     DUMMY_STRUCT(0x31C);
-
     struct
     {
         DUMMY_STRUCT(0x80);
@@ -258,9 +432,10 @@ typedef union BattleCtrlData
 
 } BattleCtrlData, *PBattleCtrlData;
 
-typedef union MONSTER_STATUS
+//typedef union _MONSTER_STATUS
+typedef struct _MONSTER_STATUS
 {
-    DUMMY_STRUCT(0x2424);
+    //DUMMY_STRUCT(0x2424);
 
     BOOL IsChrEnemy(BOOL CheckAIType = TRUE)
     {
@@ -268,6 +443,16 @@ typedef union MONSTER_STATUS
             return FALSE;
 
         return FLAG_OFF(State, CHR_FLAG_NPC | CHR_FLAG_PARTY | CHR_FLAG_EMPTY);
+    }
+
+    BOOL IsChrEnemyOnly()
+    {
+        return (State & (CHR_FLAG_ENEMY | CHR_FLAG_NPC | CHR_FLAG_PARTY | CHR_FLAG_EMPTY)) == CHR_FLAG_ENEMY;
+    }
+
+    BOOL IsChrEmpty()
+    {
+        return FLAG_ON(State, CHR_FLAG_EMPTY);
     }
 
     BOOL IsChrCanThinkSCraft(BOOL CheckAiType = FALSE)
@@ -292,8 +477,9 @@ typedef union MONSTER_STATUS
         return FALSE;
     }
 
-    struct
-    {
+    //struct
+    //{
+
         USHORT                  CharPosition;               // 0x00
         USHORT                  State;                      // 0x02
         USHORT                  State2;                     // 0x04
@@ -303,8 +489,11 @@ typedef union MONSTER_STATUS
         ULONG                   SymbolIndex;                // 0x10
         ULONG                   MSFileIndex;                // 0x14
         ULONG                   ASFileIndex;                // 0x18
+        DUMMY_STRUCT(1);                                    // 0x1C
+        BYTE                    TeamRushAddition;           // 0x1D
+        USHORT                  MasterQuartzUsedFlag;       // 0x1E
 
-        DUMMY_STRUCT(0x16C - 0x1C);
+        DUMMY_STRUCT(0x16C - 0x20);
 
         USHORT                  CurrentActionType;          // 0x16C
 
@@ -328,12 +517,15 @@ typedef union MONSTER_STATUS
         BYTE                    SelectedTargetIndex;        // 0x1CB
         COORD                   SelectedTargetPos;          // 0x1CC
 
-        DUMMY_STRUCT(0x22C - 0x1D0);
+        //DUMMY_STRUCT(0x234 - 0x1D0);
+        DUMMY_STRUCT(0x20C - 0x1D0);
+        BYTE                    IsHitMiss[0x10];            // 0x20C
+        BYTE                    IsHitJudged[0x10];          // 0x21C
+        //DUMMY_STRUCT(0x234 - 0x22C);
 
         PBattleCtrlData         CtrlData;                   // 0x22C
         PVOID                   Unknown_230;                // 0x230
-        CHAR_STATUS             ChrStatus[2];               // 0x234
-                                                            // 0x268
+        CHAR_STATUS ChrStatus[2];                           // 0x234
 
         USHORT MoveSPD;                                     // 0x29C
 
@@ -368,29 +560,233 @@ typedef union MONSTER_STATUS
 
         } SelectedCraft;
 
-        DUMMY_STRUCT(4);                                    // 0xF28
+        BYTE                    Runaway[4];                 // 0xF28
 
         CRAFT_INFO                  CraftInfo[16];          // 0xF2C
-        CRAFT_DESCRIPTION           CraftDescription[10];   // 0x10EC
+        CRAFT_DESCRIPTION           CraftDescription[16];   // 0x10EC
 
-        DUMMY_STRUCT(0x2408 - 0x10EC - sizeof(CRAFT_DESCRIPTION) * 10);
+        BYTE                    Sepith[7];                  // 0x22EC
+        DUMMY_STRUCT(3);
+        USHORT  				AttributeRate[7];           // 0x22F6
+        ULONG       			Resistance;					// 0x2304
+        DUMMY_STRUCT(0x78);
+        char				    CharacterIntro[0x80];		// 0x2380
 
+        //DUMMY_STRUCT(0x2408 - 0x10EC - sizeof(CRAFT_DESCRIPTION) * 10);
+        DUMMY_STRUCT(0x2408 - 0x2380 - 0x80);
         ULONG                       SummonCount;            // 0x2408
+        DUMMY_STRUCT(0x2424 - 0x2408 - 0x4);
 
-    };
+    //};
 
 } MONSTER_STATUS, *PMONSTER_STATUS;
 
-#pragma pack(pop)
+typedef union _AS_FILE
+{
+    ULONG GetActionCount()
+    {
+        ULONG Count = 0;
+        PUSHORT ActionList = GetActionList();
+        while (ActionList < (PUSHORT)PtrAdd(this, sizeof(*this)) && *ActionList != 0)
+        {
+            Count++;
+            ActionList++;
+        }
+        return Count;
+    }
 
+    BOOL IsActionValid(ULONG ActionNo, ULONG ActionCount)
+    {
+        if (ActionNo >= ActionCount)
+            return FALSE;
+        if (GetActionList()[ActionNo] == BattleActionScript::EMPTY_ACTION)
+            return FALSE;
+        return TRUE;
+    }
+
+    PUSHORT GetActionList()
+    {
+        return (PUSHORT)PtrAdd(this, (ULONG)ActionListOffset);
+    }
+
+    DUMMY_STRUCT(0x5F00);
+    struct
+    {
+        USHORT      ActionListOffset;
+        USHORT      ChrPosFactorOffset;
+    };
+} AS_FILE, *PAS_FILE;
+
+typedef union _ITEM_ENTRY
+{
+    BYTE    Bytes[0x1C];
+
+    struct
+    {
+        USHORT  ItemId;
+        BYTE    Misc;
+        BYTE    Limit;
+        BYTE    MaxAmount;
+        BYTE    Type;           // 0x5
+        DUMMY_STRUCT(0x1C - 0x6 - 0x4);
+        ULONG   Price;
+    };
+
+    struct _DOUGU
+    {
+        USHORT  ItemId;                 // 0x0
+        BYTE    Misc;                   // 0x2
+        BYTE    Effect3;                // 0x3
+        BYTE    MaxAmount;              // 0x4
+        BYTE    Type;                   // 0x5
+        BYTE    Effect1;                // 0x6
+        BYTE    Effect2;                // 0x7
+        BYTE    dummy1;                 // 0x8
+        BYTE    ShapeScope;             // 0x9
+        CHAR    RNG;                    // 0xA
+        BYTE    ScopeRadius;            // 0xB
+        SHORT   Effect1Parameter;       // 0xC
+        USHORT  Effect1ST;              // 0xE
+        SHORT   Effect2Parameter;       // 0x10
+        USHORT  Effect2ST;              // 0x12
+        CHAR    Effect3Parameter;       // 0x14
+        BYTE    Effect3ST;              // 0x15
+        BYTE    dummy2;                 // 0x16
+        BYTE    DisplayIndex;           // 0x17
+        ULONG   Price;                  // 0x18
+    } DOUGU;
+} ITEM_ENTRY, *PITEM_ENTRY;
+
+EDAO* GlobalGetEDAO();
 
 class CSSaveData
 {
+#pragma pack(push, 1)
+    typedef union
+    {
+        DUMMY_STRUCT(0x4C4);
+        struct
+        {
+            DUMMY_STRUCT(0x4);
+            INT     Adapter;        // 0x4
+            INT     Device;
+            INT     Mode;
+            INT     WindowWidth;    // 0x10
+            INT     WindowHeight;   // 0x14
+            DUMMY_STRUCT(0x475-0x18);
+            BYTE    WindowMode;     // 0x475
+            DUMMY_STRUCT(0x484-0x476);
+            BYTE    BgmVolumeIni;   // 0x484    ini
+            BYTE    SeVolumeIni;    // 0x485
+            BYTE    BgmOff;         // 0x486    ini invalid
+            BYTE    SeOff;          // 0x487    ini invalid
+            DUMMY_STRUCT(0x34);
+            BYTE    BgmVolume;      // 0x4BC    81C68
+            BYTE    SeVolume;       // 0x4BD    81C69
+            DUMMY_STRUCT(0x2);
+            ULONG   Option;         // 0x4C0
+
+        } ;
+
+    } SystemConfigData;
+
+    typedef struct
+    {
+        DUMMY_STRUCT(0x7EDD6);
+        USHORT  TitleVisualCount1;  // 0x7EDD6
+        DUMMY_STRUCT(0x817AC - 0x7EDD6 - 2);
+        //DUMMY_STRUCT(0x817AC);
+        SystemConfigData Config;    // 0x817AC
+        DUMMY_STRUCT(0xC);
+        UINT64  Record;             // 0x81C7C
+        ULONG   Tokuten;            // 0x81C84
+        ULONG   Medal;              // 0x81C88
+        DUMMY_STRUCT(0x8);
+        ULONG   GameAccount;        // 0x81C94 invalid bug? PomttoAccount
+        DUMMY_STRUCT(0x25434 - 0xC);
+        ULONG   TitleVisualCount;   // 0xA70C0
+        ULONG   ExtraMode;          // 0xA70C4
+        DUMMY_STRUCT(0x4);
+        ULONG   Unknown_4D4;        // 0xA70CC
+
+    } MemorySystemData;
+
+
+    typedef union  // 0x504
+    {
+        DUMMY_STRUCT(0x504);
+        struct
+        {
+            SystemConfigData Config;
+            UINT64  Record;             // 0x4C4
+            ULONG   ExtraMode;          // 0x4CC
+            ULONG   Tokuten;            // 0x4D0
+            ULONG   Unknown_4D4;        // 0x4D4
+            ULONG   Medal;              // 0x4D8
+            ULONG   TitleVisualCount;   // 0x4DC
+            ULONG   GameAccount;        // 0x4E0
+        };
+
+    } LocalSystemData;
+#pragma pack(pop)
+
 public:
     VOID SaveData2SystemData();
     VOID SystemData2SaveData();
 
+    EDAO* GetEDAO()
+    {
+        return (EDAO *)PtrSub(this, 0x78CB8);
+    }
+
+    MemorySystemData* GetMemorySystemData()
+    {
+        return (MemorySystemData*)GetEDAO();
+    }
+
+    // SaveData2SystemData()
+    VOID THISCALL SaveSystemData(LocalSystemData* pLocal)
+    {
+        if (pLocal == nullptr)
+            return;
+
+        MemorySystemData* pMemory = GetMemorySystemData();
+        ZeroMemory(pLocal, sizeof(*pLocal));
+
+        pLocal->Config = pMemory->Config;
+        pLocal->Record = pMemory->Record;
+        pLocal->ExtraMode = pMemory->ExtraMode;
+        pLocal->Tokuten = pMemory->Tokuten;
+        pLocal->Unknown_4D4 = pMemory->Unknown_4D4;
+        pLocal->Medal = pMemory->Medal;
+        pLocal->TitleVisualCount = MY_MAX(pMemory->TitleVisualCount, pMemory->TitleVisualCount1);
+        pLocal->GameAccount = pMemory->GameAccount;
+
+    }
+
+    // SystemData2SaveData()
+    VOID THISCALL LoadSystemData(LocalSystemData* pLocal)
+    {
+        if (pLocal == nullptr)
+            return;
+
+        MemorySystemData* pMemory = GetMemorySystemData();
+
+        //pMemory->Config = pLocal->Config;
+        if (pLocal->Config.WindowMode == 0 && pLocal->Config.WindowWidth == 0){}
+        else
+            pMemory->Config.Option = pLocal->Config.Option;
+        pMemory->Record = pLocal->Record;
+        pMemory->ExtraMode = pLocal->ExtraMode;
+        pMemory->Tokuten = pLocal->Tokuten;
+        pMemory->Unknown_4D4 = pLocal->Unknown_4D4;
+        pMemory->Medal = pLocal->Medal;
+        pMemory->TitleVisualCount = pLocal->TitleVisualCount;
+        pMemory->GameAccount = pLocal->GameAccount;
+    }
+
 public:
+
     PUSHORT GetPartyChipMap()
     {
         return (PUSHORT)PtrAdd(this, 0x6140);
@@ -408,7 +804,8 @@ public:
 
     BOOL IsCustomChar(ULONG_PTR ChrId)
     {
-        return ChrId >= 0xC ? FALSE : GetPartyChipMap()[ChrId] >= MINIMUM_CUSTOM_CHAR_ID;
+        //mark
+        return ChrId >= MAXIMUM_CHR_NUMBER_WITH_STATUS ? FALSE : GetPartyChipMap()[ChrId] >= MINIMUM_CUSTOM_CHAR_ID;
     }
 
     PUSHORT GetChrMagicList()
@@ -432,7 +829,26 @@ public:
     }
 
     ULONG FASTCALL GetTeamAttackMemberId(ULONG ChrId);
+
+
+    // mark
+    VOID THISCALL SetChrPositionAuto(ULONG ChrId, PUSHORT pPartyList, ULONG ChrCount)
+    {
+        DETOUR_METHOD(CActor, SetChrPositionAuto, 0x676628, ChrId, pPartyList, ChrCount);
+    }
+
+public:
+    DUMMY_STRUCT(0x94);
+    ULONG       SystemFlag[2];              // 0x94
+    BYTE        Flag[SCENA_FLAG_SIZE];      // 0x9C
+    PVOID       pScenaCharacterInf[2];      // 0x2BC    0x2C0
+    ULONG       ScenaCharacterCount[2];     // 0x2C4    0x2C8
+    USHORT      PartyList[8];               // 0x2CC
+    USHORT      PartyListSaved[8];          // 0x2DC
+    CHAR_STATUS ChrStatus[MAXIMUM_CHR_NUMBER_WITH_STATUS]; // 0x2EC
+
 };
+#pragma pack(pop)
 
 typedef union
 {
@@ -543,6 +959,8 @@ public:
 
 INIT_STATIC_MEMBER(CBattleInfoBox::StubDrawMonsterStatus);
 
+#pragma pack(push, 1)
+
 typedef union
 {
     DUMMY_STRUCT(0x78);
@@ -552,17 +970,19 @@ typedef union
 
         PMONSTER_STATUS MSData;     // 0x60
 
-        DUMMY_STRUCT(4);
+        CBattle* Battle;
 
-        ULONG   IconAT;             // 0x68 不含20 空; 含10 AT条移动; 含04 行动、delay后的([20A]0销毁); 含40 当前行动的(1销毁)
-        USHORT  Flags;                // 0x6C
+        ULONG   IconAT;             // 0x68
+        USHORT  Flags;              // 0x6C 不含20 空; 含10 AT条移动; 含04 行动、delay后的([20A]0销毁); 含40 当前行动的(1销毁)
+        BYTE    Sequence;           // 0x6E
 
-        DUMMY_STRUCT(3);
-        BYTE    RNo;                // 0x71
+        DUMMY_STRUCT(2);
+        BYTE    RNo;		        // 0x71
 
         DUMMY_STRUCT(1);
 
-        BYTE    sequence;           // 0x73
+        //BYTE    Pri;	            // 0x73
+        BYTE    sequence;                // 0x73
         BOOLEAN IsSBreaking;
 
         DUMMY_STRUCT(3);
@@ -586,7 +1006,7 @@ public:
     {
         TYPE_OF(&CBattleATBar::GetChrAT0) f;
         *(PVOID *)&f = (PVOID)0x00677230;
-        return (this->*f)();
+		return (this->*f)();
     }
 
     VOID AdvanceChrInATBar(PMONSTER_STATUS MSData, BOOL InsertToFirstPos)
@@ -610,9 +1030,33 @@ public:
 
         return nullptr;
     }
+/*
+    NoInline PAT_BAR_ENTRY FindATBarEntry0NoSecond()
+    {
+        PAT_BAR_ENTRY *Entry;
+        static PAT_BAR_ENTRY PreEntry;
 
+        if (PreEntry == EntryPointer[0])
+            return PreEntry;
+
+        FOR_EACH(Entry, &EntryPointer[1], countof(EntryPointer))
+        {
+            //if (Entry[0]->MSData == nullptr) //有不连续的情况
+                //break;
+            if (Entry[0]->MSData == EntryPointer[0]->MSData)
+            {
+                PreEntry = Entry[0];
+                return Entry[0];
+            }
+        }
+
+        return nullptr;
+    }
+*/
     PAT_BAR_ENTRY THISCALL LookupReplaceAtBarEntry(PMONSTER_STATUS MSData, BOOL IsFirst);
 };
+
+#pragma pack(pop)
 
 ML_NAMESPACE_BEGIN(ArtsPage)
 
@@ -646,7 +1090,7 @@ class CBattle
 {
 public:
     VOID THISCALL SetSelectedAttack(PMONSTER_STATUS MSData);
-    VOID THISCALL SetSelectedMagic(PMONSTER_STATUS MSData, USHORT CraftIndex, USHORT CurrentCraftIndex);
+    VOID THISCALL SetSelectedMagic(PMONSTER_STATUS MSData, USHORT CraftIndex, USHORT AiIndex);
     VOID THISCALL SetSelectedCraft(PMONSTER_STATUS MSData, USHORT CraftIndex, USHORT AiIndex);
     VOID THISCALL SetSelectedSCraft(PMONSTER_STATUS MSData, USHORT CraftIndex, USHORT AiIndex);
 
@@ -673,6 +1117,11 @@ public:
     EDAO* GetEDAO()
     {
         return *(EDAO **)PtrAdd(this, 0x38D24);
+    }
+
+    CGlobal* GetGlobal()
+    {
+        return *(CGlobal **)PtrAdd(this, 0x38D30);
     }
 
     CBattleATBar* GetBattleATBar()
@@ -717,14 +1166,18 @@ public:
         return (this->*ShowConditionText)(MSData, Text, Color, Unknown);
     }
 
-    PMS_EFFECT_INFO THISCALL FindEffectInfoByCondition(PMONSTER_STATUS MSData, ULONG_PTR Condition, ULONG_PTR TimeLeft = 0)
+    // mark
+    PMS_EFFECT_INFO THISCALL FindEffectInfoByCondition(PMONSTER_STATUS MSData, ULONG_PTR Condition, INT TimeLeft = 0)
     {
+        //DETOUR_METHOD(CBattle, FindEffectInfoByCondition, 0x673CC5, MSData, Condition, ConditionRateType);
         TYPE_OF(&CBattle::FindEffectInfoByCondition) FindEffectInfoByCondition;
 
         *(PULONG_PTR)&FindEffectInfoByCondition = 0x9E34A0;
 
         return (this->*FindEffectInfoByCondition)(MSData, Condition, TimeLeft);
     }
+
+    PMS_EFFECT_INFO THISCALL FindEffectInfoByConditionEx(PMONSTER_STATUS MSData, ULONG_PTR Condition, INT ConditionRateType = 0, BOOL IsCheckSum = TRUE);
 
     VOID THISCALL ShowSkipAnimeButton()
     {
@@ -808,7 +1261,6 @@ public:
     VOID NakedUpdateCraftReflectLeftTime();
 
 #pragma pack(push, 1)
-
     typedef struct
     {
         BYTE    OpCode;
@@ -821,13 +1273,13 @@ public:
         };
 
     } AS_8D_PARAM, *PAS_8D_PARAM;
-
 #pragma pack(pop)
 
     enum
     {
         AS_8D_FUNCTION_MINIMUM  = 0x70,
 
+        //AS_8D_FUNCTION_REI_JI_MAI_GO    =   AS_8D_FUNCTION_MINIMUM,
         AS_8D_FUNCTION_REI_JI_MAI_GO    = 0x70,
         AS_8D_FUNCTION_AVATAR           = 0x71,
     };
@@ -858,7 +1310,7 @@ public:
     }
 
     BOOL THISCALL IsAvatarLoaded(ULONG AvatarIndex);
-
+ 
     PROPERTY(ULONG, SummonX);
     PROPERTY(ULONG, SummonY);
 
@@ -881,12 +1333,13 @@ public:
     {
         *(PULONG)PtrAdd(this, 0xF3F4C) = value;
     }
+ 
 
     /************************************************************************
       enemy sbreak
     ************************************************************************/
 
-#define THINK_SBREAK_FILTER         TAG4('THSB')
+#define THINK_SBREAK_FILTER TAG4('THSB')
 #define FIND_EMPTY_POSITION_FILTER  TAG4('EPOS')
 
     VOID NakedGetBattleState();
@@ -911,18 +1364,33 @@ public:
     VOID NakedAS_8D_5F();
     VOID THISCALL AS_8D_5F(PMONSTER_STATUS);
 
+    // mark
+    // 不处理部分人物模型特效，取消vanish也不会回来
     VOID THISCALL UnsetCondition(PMONSTER_STATUS MSData, ULONG condition)
     {
+        //DETOUR_METHOD(CBattle, UnsetCondition, 0x672AE1, MSData, condition);
         TYPE_OF(&CBattle::UnsetCondition) f;
         *(PVOID *)&f = (PVOID)0x672AE1;
         return (this->*f)(MSData, condition);
     }
 
-    VOID THISCALL SetCondition(PMONSTER_STATUS MSData, ULONG par2, ULONG condition, ULONG par4, ULONG par5)
+    VOID THISCALL RemoveCondition(PMONSTER_STATUS MSData, ULONG condition, INT type) // >0 Rate>0; <0 Rate <0; 0 all
     {
+        DETOUR_METHOD(CBattle, RemoveCondition, 0x67B0BA, MSData, condition, type);
+    }
+
+    // 不经过抗性检测
+    VOID THISCALL SetCondition(PMONSTER_STATUS dst, PMONSTER_STATUS src, ULONG condition, ULONG at, ULONG conditionRate)
+    {
+        //DETOUR_METHOD(CBattle, SetCondition, 0x676EA2, dst, src, condition, at, conditionRate);
         TYPE_OF(&CBattle::SetCondition) f;
         *(PVOID *)&f = (PVOID)0x676EA2;
-        return (this->*f)(MSData, par2, condition, par4, par5);
+        return (this->*f)(dst, src, condition, at, conditionRate);
+	}
+
+    VOID THISCALL AddCondition(PMONSTER_STATUS src, PMONSTER_STATUS dst, ULONG condition, ULONG at, ULONG conditionRate)
+    {
+        DETOUR_METHOD(CBattle, AddCondition, 0x677D11, src, dst, condition, at, conditionRate);
     }
 
     BOOL CheckCondition(PMONSTER_STATUS MSData, ULONG condition, ULONG par3=0)
@@ -930,6 +1398,20 @@ public:
         return FindEffectInfoByCondition(MSData, condition, par3) != nullptr;
     }
 
+    VOID THISCALL SubHPWhenAttack(PMONSTER_STATUS dst, INT HP)
+    {
+        DETOUR_METHOD(CBattle, SubHPWhenAttack, 0x679869, dst, HP);
+    }
+
+    VOID THISCALL SubHPEveryAct(PMONSTER_STATUS dst, INT HP)
+    {
+        DETOUR_METHOD(CBattle, SubHPEveryAct, 0x674157, dst, HP);
+    }
+
+    VOID THISCALL AnalyzeMonsInf(PMONSTER_STATUS MSData, BOOL IsSkipBattleEvaluation = FALSE)
+    {
+        DETOUR_METHOD(CBattle, AnalyzeMonsInf, 0x6747D3, MSData, IsSkipBattleEvaluation);
+    }
 
     DECL_STATIC_METHOD_POINTER(CBattle, LoadMSFile);
 
@@ -937,6 +1419,40 @@ public:
       acgn end
     ************************************************************************/
 
+    // mark
+    PAS_FILE GetASFile()
+    {
+        return (PAS_FILE)PtrAdd(this, 0x3A800);
+    }
+
+    PAS_FILE GetASFile(PMONSTER_STATUS MSData)
+    {
+        if (MSData->CharPosition >= MAXIMUM_CHR_NUMBER_IN_BATTLE || MSData->IsChrEmpty())
+            return nullptr;
+        else
+            return &(GetASFile()[MSData->CharPosition]);
+    }
+
+
+    VOID NakedCheckAliveBeforeHeal();
+    VOID FASTCALL CheckAliveBeforeHeal(ULONG CharPosition);
+    VOID THISCALL SubHPEveryAct2WhenAttack(PMONSTER_STATUS dst, PCHAR_STATUS pChrStatusFinal, INT HP);
+    VOID NakedHandleConditionBeforeMasterQuartzKipaTakeEffect();
+    VOID FASTCALL HandleConditionBeforeMasterQuartzKipaTakeEffect(PMONSTER_STATUS MSData);
+    BOOL THISCALL IsNeedBattleEvaluationSuperKill(ULONG ChrPosition);
+
+    VOID THISCALL SetBattleStatusFinalByDifficulty(PMONSTER_STATUS MSData);
+    DECL_STATIC_METHOD_POINTER(CBattle, SetBattleStatusFinalByDifficulty);
+
+    BOOL THISCALL CheckQuartz(ULONG ChrPosition, ULONG ItemId, PULONG EquippedIndex = nullptr);
+    DECL_STATIC_METHOD_POINTER(CBattle, CheckQuartz);
+
+    PMS_EFFECT_INFO THISCALL CheckConditionGreenPepperWhenThinkCraft(PMONSTER_STATUS MSData, ULONG_PTR Condition, INT ConditionRateType);
+
+    BOOL IsChrCanTeamRush(PMONSTER_STATUS MSData, PCRAFT_INFO pCraft);
+    DECL_STATIC_METHOD_POINTER(CBattle, IsChrCanTeamRush);
+
+    BOOL GetHitResult(PMONSTER_STATUS src, PMONSTER_STATUS dst);
 
     DECL_STATIC_METHOD_POINTER(CBattle, SetCurrentActionChrInfo);
     DECL_STATIC_METHOD_POINTER(CBattle, ThinkRunaway);
@@ -944,6 +1460,8 @@ public:
     DECL_STATIC_METHOD_POINTER(CBattle, ExecuteActionScript);
     DECL_STATIC_METHOD_POINTER(CBattle, IsTargetCraftReflect);
     DECL_STATIC_METHOD_POINTER(CBattle, OnSetChrConditionFlag);
+
+    static PCHAR_STATUS pChrStatusBackup;
 };
 
 INIT_STATIC_MEMBER(CBattle::StubSetCurrentActionChrInfo);
@@ -953,6 +1471,12 @@ INIT_STATIC_MEMBER(CBattle::StubLoadMSFile);
 INIT_STATIC_MEMBER(CBattle::StubExecuteActionScript);
 INIT_STATIC_MEMBER(CBattle::StubIsTargetCraftReflect);
 INIT_STATIC_MEMBER(CBattle::StubOnSetChrConditionFlag);
+
+INIT_STATIC_MEMBER(CBattle::StubSetBattleStatusFinalByDifficulty);
+INIT_STATIC_MEMBER(CBattle::StubCheckQuartz);
+INIT_STATIC_MEMBER(CBattle::StubIsChrCanTeamRush);
+
+INIT_STATIC_MEMBER(CBattle::pChrStatusBackup);
 
 class CSound
 {
@@ -1043,17 +1567,23 @@ public:
 
 
     BOOL THISCALL ScpSaveRestoreParty(PSCENA_ENV_BLOCK Block);
+    // mark
+    BOOL THISCALL ScpLeaveParty(PSCENA_ENV_BLOCK Block);
+    ULONG THISCALL ScpGetFunctionAddress(ULONG_PTR pScena, ULONG function);
 
     VOID FASTCALL InheritSaveData(PBYTE ScenarioFlags);
     VOID NakedInheritSaveData();
 
     DECL_STATIC_METHOD_POINTER(CScript, InheritSaveData);
+    DECL_STATIC_METHOD_POINTER(CScript, ScpLeaveParty);
+    DECL_STATIC_METHOD_POINTER(CScript, ScpGetFunctionAddress);
     DECL_STATIC_METHOD_POINTER(CScript, ScpSaveRestoreParty);
 };
 
 INIT_STATIC_MEMBER(CScript::StubInheritSaveData);
 INIT_STATIC_MEMBER(CScript::StubScpSaveRestoreParty);
-
+INIT_STATIC_MEMBER(CScript::StubScpLeaveParty);
+INIT_STATIC_MEMBER(CScript::StubScpGetFunctionAddress);
 
 class CMap
 {
@@ -1093,6 +1623,7 @@ public:
 
     static EDAO* GlobalGetEDAO()
     {
+        //return ::GlobalGetEDAO();
         return *(EDAO **)0xC29988;
     }
 
@@ -1128,7 +1659,13 @@ public:
 
     CSSaveData* GetSaveData()
     {
-        return GetScript()->GetSaveData();
+        //return GetScript()->GetSaveData();
+        return (CSSaveData*)PtrAdd(this, 0x78CB8);
+    }
+
+    CDebug* GetDebug()
+    {
+        return (CDebug *)PtrAdd(this, 0xB80D8);
     }
 
     BOOL IsCustomChar(ULONG_PTR ChrId)
@@ -1261,6 +1798,7 @@ public:
 
     VOID CalcChrRawStatusFromLevel(ULONG ChrId, ULONG Level, ULONG Unknown = 0)
     {
+        //DETOUR_METHOD(EDAO, CalcChrRawStatusFromLevel, 0x675FF7, ChrId, Level, Unknown);
         TYPE_OF(&EDAO::CalcChrRawStatusFromLevel) f;
 
         *(PVOID *)&f = (PVOID)0x675FF7;
@@ -1300,12 +1838,68 @@ public:
     VOID THISCALL Fade(ULONG Param1, ULONG Param2, ULONG Param3, ULONG Param4, ULONG Param5, ULONG Param6);
     BOOL THISCALL CheckItemEquipped(ULONG ItemId, PULONG EquippedIndex);
 
+    //mark
+    ULONG THISCALL GetDifficulty();
+
+    VOID THISCALL SetBattleStatusFinalByEquipment(ULONG ChrPosition, PCHAR_STATUS pStatusFinal, PCHAR_STATUS pStatusBasic)
+    {
+        DETOUR_METHOD(EDAO, SetBattleStatusFinalByEquipment, 0x00676ECA, ChrPosition, pStatusFinal, pStatusBasic);
+    }
+
+    // 木偶 复活
+    VOID THISCALL SetBattleStatusFinalWhenRecover(ULONG ChrPosition, PCHAR_STATUS pStatusFinal, PCHAR_STATUS pStatusBasic);
+
     DECL_STATIC_METHOD_POINTER(EDAO, CheckItemEquipped);
+    DECL_STATIC_METHOD_POINTER(EDAO, GetDifficulty);
+
+    static CHAR_T_STATUS ChrT_Status;
+    static PCHAR_T_STATUS CalcChrT_StatusNew(PCHAR_T_STATUS pStatus, ULONG ChrNo, ULONG Level);
+    PCHAR_T_STATUS THISCALL CalcChrT_Status(ULONG ChrNo, ULONG Level);
+    DECL_STATIC_METHOD_POINTER(EDAO, CalcChrT_Status);
+
+    VOID THISCALL CalcChrRawStatusFromLevelNew(ULONG ChrId, ULONG Level, ULONG Unknown = 0);
+    DECL_STATIC_METHOD_POINTER(EDAO, CalcChrRawStatusFromLevel);
+
+    PCHAR_STATUS CalcChrRawStatusByFinalStatus(PCHAR_STATUS RawStatus, ULONG ChrID, PCHAR_STATUS FinalStatus);
+    DECL_STATIC_METHOD_POINTER(EDAO, CalcChrRawStatusByFinalStatus);
+/*
+    static ULONG GetWindowWidth()
+    {
+        return *(PULONG)PtrAdd(GlobalGetEDAO(), 0x3084);
+    }
+
+    static ULONG GetWindowHeight()
+    {
+        return *(PULONG)PtrAdd(GlobalGetEDAO(), 0x3088);
+    }
+
+    VOID THISCALL ShowDebugText(LPCSTR lpText, INT x, INT y, INT color, INT par5, INT par6, INT par7)
+    {
+        DETOUR_METHOD(EDAO, ShowDebugText, 0x006729FB, lpText, x, y, color, par5, par6, par7);
+    }
+
+    VOID THISCALL ShowDebugTextPositionRestore1(LPCSTR lpText, INT x, INT y, INT color, INT par5, INT par6, INT par7)
+    {
+        x = (x-1)  * 480 / EDAO::GetWindowWidth() + 1;
+        y = (y-1) * 272 / EDAO::GetWindowHeight() + 1;
+        ShowDebugText(lpText, x, y, color, par5, par6, par7);
+    }
+
+    VOID THISCALL ShowDebugTextPositionRestore2(LPCSTR lpText, INT x, INT y, INT color, INT par5, INT par6, INT par7)
+    {
+        x = x * 480 / EDAO::GetWindowWidth();
+        y = y * 272 / EDAO::GetWindowHeight();
+        ShowDebugText(lpText, x, y, color, par5, par6, par7);
+    }
+*/
 };
 
-DECL_SELECTANY TYPE_OF(EDAO::StubCheckItemEquipped) EDAO::StubCheckItemEquipped = nullptr;
-
-
+INIT_STATIC_MEMBER(EDAO::StubCheckItemEquipped);
+INIT_STATIC_MEMBER(EDAO::StubGetDifficulty);
+INIT_STATIC_MEMBER(EDAO::StubCalcChrT_Status);
+INIT_STATIC_MEMBER(EDAO::StubCalcChrRawStatusFromLevel);
+INIT_STATIC_MEMBER(EDAO::StubCalcChrRawStatusByFinalStatus);
+DECL_SELECTANY TYPE_OF(EDAO::ChrT_Status) EDAO::ChrT_Status;
 
 class CCoordConverter
 {
@@ -1355,6 +1949,7 @@ public:
 
     VOID CalcChrFinalStatus(ULONG ChrId, PCHAR_STATUS FinalStatus, PCHAR_STATUS RawStatus)
     {
+        //DETOUR_METHOD(CGlobal, CalcChrFinalStatus, 0x677B36, ChrId, FinalStatus, RawStatus);
         TYPE_OF(&CGlobal::CalcChrFinalStatus) f;
 
         *(PVOID *)&f = (PVOID)0x677B36;
@@ -1362,9 +1957,31 @@ public:
         return (this->*f)(ChrId, FinalStatus, RawStatus);
     }
 
+    PITEM_ENTRY THISCALL GetItemEntry(PITEM_ENTRY pItemEntry, ULONG ItemId)
+    {
+        DETOUR_METHOD(CGlobal, GetItemEntry, 0x00673991, pItemEntry, ItemId);
+    }
+
+    BOOL THISCALL SubItem(ULONG ItemId, ULONG Count)
+    {
+        DETOUR_METHOD(CGlobal, SubItem, 0x00675EEE, ItemId, Count);
+    }
+
+    BOOL THISCALL DoEffect(ULONG ActionType, ULONG SrcChrId, ULONG DstChrId, ULONG Effect, PCOORD pEffectPar, ULONG par6, BOOL IsPlaySound)
+    {
+        DETOUR_METHOD(CGlobal, DoEffect, 0x006772A8, ActionType, SrcChrId, DstChrId, Effect, pEffectPar, par6, IsPlaySound);
+    }
+
     PBYTE THISCALL FixWeaponShapeAndRange(USHORT ItemId);
 
     DECL_STATIC_METHOD_POINTER(CGlobal, FixWeaponShapeAndRange);
+
+    //mark
+    BOOL THISCALL AddCraft(ULONG ChrId, ULONG Craft);
+    DECL_STATIC_METHOD_POINTER(CGlobal, AddCraft);
+
+    BOOL THISCALL UseItemDouguOld(ULONG ItemId, ULONG ChrId);
+    BOOL THISCALL UseItemDouguFix(ULONG ItemId, ULONG ChrId);
 
     static TYPE_OF(&CGlobal::GetMagicData)          StubGetMagicData;
     static TYPE_OF(&CGlobal::GetMagicDescription)   StubGetMagicDescription;
@@ -1375,8 +1992,46 @@ DECL_SELECTANY TYPE_OF(CGlobal::StubGetMagicData)           CGlobal::StubGetMagi
 DECL_SELECTANY TYPE_OF(CGlobal::StubGetMagicDescription)    CGlobal::StubGetMagicDescription = nullptr;
 DECL_SELECTANY TYPE_OF(CGlobal::StubGetMagicQueryTable)     CGlobal::StubGetMagicQueryTable = nullptr;
 
+
 INIT_STATIC_MEMBER(CGlobal::StubFixWeaponShapeAndRange);
 
+INIT_STATIC_MEMBER(CGlobal::StubAddCraft);
+
 BOOL AoIsFileExist(PCSTR FileName);
+
+//mark
+class CDebug
+{
+public:
+    VOID THISCALL SelectPartyChr()
+    {
+        DETOUR_METHOD(CDebug, SelectPartyChr, 0x672F82);
+    }
+
+    VOID THISCALL MainControl()
+    {
+        //TYPE_OF(&GetAsyncKeyState) StubGetAsyncKeyState;
+        //*(PULONG_PTR)&StubGetAsyncKeyState = *(PULONG_PTR)0xDD5A18;
+
+        if (FLAG_ON(StubGetAsyncKeyState(VK_CONTROL), 0x8000))
+        {
+            static BOOL IsSelectPartyChr;
+            if (FLAG_ON_ALL(StubGetAsyncKeyState('P'), 0x8001) && !IsSelectPartyChr)
+            {
+                IsSelectPartyChr = TRUE;
+                SelectPartyChr();
+                IsSelectPartyChr = FALSE;
+                return;
+            }
+        }
+
+        return (this->*StubMainControl)();
+    }
+
+    BOOL THISCALL IsFileExist(PCSTR FileName);
+    DECL_STATIC_METHOD_POINTER(CDebug, MainControl);
+};
+
+INIT_STATIC_MEMBER(CDebug::StubMainControl);
 
 #endif // _EDAO_H_5c8a3013_4334_4138_9413_3d0209da878e_

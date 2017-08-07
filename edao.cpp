@@ -1,6 +1,7 @@
 // #pragma comment(linker, "/SECTION:.text,ERW /MERGE:.rdata=.text /MERGE:.data=.text")
 // #pragma comment(linker, "/SECTION:.Asuna,ERW /MERGE:.text=.Asuna")
 
+// #include "Aki.h"
 #include "edao.h"
 #include "SoundArc.h"
 #include "edao_vm.h"
@@ -101,7 +102,7 @@ LRESULT NTAPI MainWndProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lPara
                     Turbo ^= TRUE;
                     break;
 
-                //case 'J':
+                // case 'J':
                 //    EDAO::GlobalGetEDAO()->JumpToMap();
                 //    break;
             }
@@ -612,7 +613,7 @@ BOOL Initialize(PVOID BaseAddress)
 
         // tweak
 
-        // FunctionCallRva(0x40492A, ShowExitMessageBox),
+        FunctionCallRva(0x40492A, ShowExitMessageBox),
         FunctionCallRva(0x3640A1, InitWarningItpTimeStamp),   // bypass show warning.itp
         FunctionCallRva(0x3E2B42, EDAO::NakedLoadSaveDataThumb),
         FunctionCallRva(0x465F08, EDAO::NakedSetSaveDataScrollStep),
@@ -739,7 +740,8 @@ BOOL Initialize(PVOID BaseAddress)
 
 #else
 
-    Turbo = TRUE;
+    Turbo = FALSE;
+    //Initialize_ex(BaseAddress);
 
 #endif
 

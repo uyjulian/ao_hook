@@ -1,3 +1,6 @@
+
+#pragma once
+
 VOID THISCALL CBattle::SetSelectedSCraft(PMONSTER_STATUS MSData, USHORT CraftIndex, USHORT AiIndex)
 {
     MSData->SelectedActionType              = ACTION_SCRAFT;

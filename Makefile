@@ -1,7 +1,7 @@
 
 export WINEDEBUG=-all
 
-FILES := Battle.o edao.o Global.o Sound.o SoundArc.o  ml/fileio.o ml/ldasm.o ml/mainlib.o ml/memoryallocator.o ml/mlntfileio.o ml/mlntldr.o ml/mlntmemory.o ml/mlntnls.o ml/mlntprocess.o ml/mlntregistry.o ml/mlntrtl.o ml/nativeapihelper.o ml/ntmemory.o ml/patchmemory.o ml/peimage.o ml/stringhelper.o
+FILES := Battle.o edao.o Global.o Sound.o SoundArc.o ed_ao_ex.o ml/fileio.o ml/ldasm.o ml/mainlib.o ml/memoryallocator.o ml/mlntfileio.o ml/mlntldr.o ml/mlntmemory.o ml/mlntnls.o ml/mlntprocess.o ml/mlntregistry.o ml/mlntrtl.o ml/nativeapihelper.o ml/ntmemory.o ml/patchmemory.o ml/peimage.o ml/stringhelper.o
 
 .PHONY: clean
 
