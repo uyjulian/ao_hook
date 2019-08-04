@@ -7,6 +7,8 @@
 // #include "Aki.h"
 #include <GdiPlus.h>
 #include <dinput.h>
+//TODO: figure out what this actually is
+#define FLAG_ON_ALL FLAG_ON
 
 #if D3D9_VER
     #define NtGetTickCount (ULONG64)GetTickCount

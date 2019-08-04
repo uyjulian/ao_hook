@@ -21,6 +21,8 @@
 #define STATUS_FORMULA_PATH         TO_STRING(EX_DIR_##\\status.config.result.formula.txt)
 #define STATUS_FORMULA_HTML_PATH    TO_STRING(EX_DIR_##\\status.config.result.formula.html)
 #define STATUS_DUMP_PATH            TO_STRING(EX_DIR_##\\status.dump.txt)
+//TODO: figure out what this actually is
+#define FLAG_ON_ALL FLAG_ON
 
 
 #if CONSOLE_DEBUG
