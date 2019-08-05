@@ -3,6 +3,7 @@
 This is a hook for Ao no Kiseki. Code was pulled from the following locations:
 * https://github.com/otoboku/ao
 * https://github.com/Ouroboros/JuusanKoubou (Source/Falcom/EDAO)
+* https://github.com/xupefei/Locale-Emulator-Core
 
 # Compiling
 
