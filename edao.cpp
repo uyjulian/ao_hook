@@ -186,7 +186,7 @@ NTSTATUS InitializeRedirectEntry()
 
     for (ULONG_PTR index = 1; ;++index)
     {
-        auto patch = String::Format(L"%spatch%d\\", ExeNtPath, index);
+        auto patch = String::Format(L"%spatch%d\\", (PCUNICODE_STRING)ExeNtPath, index);
 
         if (Io::IsPathExists(patch) == FALSE)
             break;
@@ -496,6 +496,7 @@ VOID NTAPI PrintOP(LONG sub, LONG offset, PBYTE base)
     WriteLog(L"%02X, %08X, %02X", sub, offset, base[offset]);
 }
 
+#if 0
 NAKED VOID xxx()
 {
     INLINE_ASM
@@ -510,6 +511,7 @@ NAKED VOID xxx()
         ret;
     }
 }
+#endif
 
 // 90F793
 

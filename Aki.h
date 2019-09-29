@@ -542,17 +542,6 @@ NAKED VOID DecBurstEnergyWhenStandby()
     }
 }
 
-//
-NAKED VOID CBattle::NakedCheckAliveBeforeHeal()
-{
-    INLINE_ASM
-    {
-        mov edx,eax;
-        mov ecx,DWORD PTR SS:[EBP-0x8];
-        jmp CBattle::CheckAliveBeforeHeal;
-    }
-}
-
 VOID FASTCALL CBattle::CheckAliveBeforeHeal(ULONG CharPosition)
 {
     if (CharPosition < 0x12)
@@ -573,16 +562,6 @@ VOID THISCALL CBattle::SubHPEveryAct2WhenAttack(PMONSTER_STATUS dst, PCHAR_STATU
     SubHPWhenAttack(dst, HP);
     CLEAR_FLAG(g_flag, NFLAG::IsSubHPEveryAct);
     *(PVOID *)_AddressOfReturnAddress() = (PVOID)0x9E3EEF;
-}
-
-NAKED VOID CBattle::NakedHandleConditionBeforeMasterQuartzKipaTakeEffect()
-{
-    INLINE_ASM
-    {
-        MOV EDX,DWORD PTR SS:[EBP-0x2C]
-        MOV ECX,DWORD PTR SS:[EBP-0x8];
-        jmp CBattle::HandleConditionBeforeMasterQuartzKipaTakeEffect;
-    }
 }
 
 VOID FASTCALL CBattle::HandleConditionBeforeMasterQuartzKipaTakeEffect(PMONSTER_STATUS MSData)
@@ -1412,7 +1391,7 @@ NAKED VOID SepithUpLimitDisplay1()
     {
         MOVZX EAX,WORD PTR DS:[ECX+EAX*2];
         CMP EAX,0x3E7;
-        jle SHORT L00000001;
+        jle short L00000001;
         MOV EAX,0x3E7;
 L00000001:
         SHL EAX,1;
@@ -1426,7 +1405,7 @@ NAKED VOID SepithUpLimitDisplay2()
     {
         MOVZX EDX,WORD PTR DS:[ECX+EAX*2]
         CMP EDX,0x3E7;
-        jle SHORT L00000002;
+        jle short L00000002;
         MOV EDX,0x3E7;
 L00000002:
         SHL EDX,1;

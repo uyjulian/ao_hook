@@ -392,7 +392,11 @@
 
 #ifndef DECL_SELECTANY
     #if (MY_COMPILER_MSC >= 1100)
-        #define DECL_SELECTANY  __declspec(selectany)
+        #ifndef __clang__
+            #define DECL_SELECTANY  __declspec(selectany)
+        #else
+            #define DECL_SELECTANY
+        #endif
     #else
         #define DECL_SELECTANY
     #endif
@@ -23304,8 +23308,10 @@ private:
 
 #if !ML_KERNEL_MODE
 
+#ifdef __clang__
 DECL_SELECTANY HANDLE       MemoryAllocator::m_hHeapGlobal = NULL;
 DECL_SELECTANY ULONG_PTR    MemoryAllocator::m_ObjectCount = 0;
+#endif
 
 #endif // ML_KERNEL_MODE
 

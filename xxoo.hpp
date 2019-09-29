@@ -22,19 +22,6 @@ VOID THISCALL CBattle::LoadMSFile(PMONSTER_STATUS MSData, ULONG MSFileIndex)
     (this->*StubLoadMSFile)(MSData, MSFileIndex);	
 }
 
-
-NAKED VOID CBattle::NakedAS_8D_5F()
-{
-    INLINE_ASM
-    {
-        mov     ecx, [ebp - 0Ch];
-        push	[ebp + 08h];
-        call    CBattle::AS_8D_5F;
-        push	009D3675h;
-        retn;
-    }
-}
-
 VOID THISCALL CBattle::AS_8D_5F(PMONSTER_STATUS ChrMSData)
 {
     int i, start, end;

@@ -22,7 +22,9 @@
 #pragma warning (disable: 4201)
 #pragma warning (disable: 4996)
 
+#ifdef __clang__
 ML_OVERLOAD_NEW
+#endif
 
 class EDAO;
 class CGlobal;
@@ -60,7 +62,9 @@ class CDebug;
 
 BOOL Initialize_ex(PVOID BaseAddress);
 
+#ifdef __clang__
 DECL_SELECTANY TYPE_OF(&GetAsyncKeyState) StubGetAsyncKeyState;
+#endif
 
 #pragma pack(push, 1)
 
@@ -171,12 +175,14 @@ enum
     CHR_COUNT   = 0xC,
 };
 
+#ifdef __clang__
 DECL_SELECTANY
 char* lpChrName[] = {"Lloyd", "Elie", "Tio", "Randy", "Lazy", "Yin/Rixia", "Zeit", "Arios", "Noel", "Dudley", "Garcia", "ReserveB"};
 DECL_SELECTANY
 char* lpChrNameChs[] = {"罗伊德", "艾莉", "缇欧", "兰迪", "瓦吉", "银/莉夏", "神狼蔡特", "亚里欧斯", "诺艾尔上士", "达德利搜查官", "加尔西亚", "保留B"};
 DECL_SELECTANY
 WCHAR* lpwChrNameChs[] = {L"罗伊德", L"艾莉", L"缇欧", L"兰迪", L"瓦吉", L"银/莉夏", L"神狼蔡特", L"亚里欧斯", L"诺艾尔上士", L"达德利搜查官", L"加尔西亚", L"保留B"};
+#endif
 
 ML_NAMESPACE_END
 
@@ -1253,7 +1259,10 @@ public:
     VOID FASTCALL CopyMagicAndCraftData(PMONSTER_STATUS MSData);
 
     VOID NakedFindReplaceChr();
+    VOID FASTCALL FindReplaceChr(PMONSTER_STATUS MSData, PULONG RandomChrIndex);
     VOID NakedCheckCraftTargetBits();
+    ULONG_PTR FASTCALL CheckPartyCraftTargetBits(PMONSTER_STATUS MSData, PCRAFT_INFO CraftInfo);
+
 
     VOID THISCALL GetConditionIconPosByIndex(Gdiplus::PointF *Position, PMS_EFFECT_INFO EffectInfo, ULONG_PTR ConditionIndex);
     BOOL THISCALL IsTargetCraftReflect(PMONSTER_STATUS Self, PMONSTER_STATUS Target, ULONG_PTR ActionType = 0xFFFF);
@@ -2012,6 +2021,7 @@ public:
 
     VOID THISCALL MainControl()
     {
+#ifdef __clang__
         //TYPE_OF(&GetAsyncKeyState) StubGetAsyncKeyState;
         //*(PULONG_PTR)&StubGetAsyncKeyState = *(PULONG_PTR)0xDD5A18;
 
@@ -2026,6 +2036,7 @@ public:
                 return;
             }
         }
+#endif
 
         return (this->*StubMainControl)();
     }
