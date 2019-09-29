@@ -3274,7 +3274,7 @@ Long_Ptr FASTCALL StrNICompareW(PCWChar pString1, PCWChar pString2, SizeT Length
 
 Long_Ptr FASTCALL StrNCompareA(PCChar pString1, PCChar pString2, SizeT LengthToCompare)
 {
-    Long ch1, ch2, xor;
+    Long ch1, ch2, xxor;
 
     if (LengthToCompare == 0)
         return 0;
@@ -3296,18 +3296,18 @@ Long_Ptr FASTCALL StrNCompareA(PCChar pString1, PCChar pString2, SizeT LengthToC
 
     ch1 = 0;
     ch2 = 0;
-    xor = 0;
+    xxor = 0;
     if (LengthToCompare > 3) do
     {
         ch1 = *(PLong)pString1;
         ch2 = *(PLong)pString2;
 
-        xor = ch1 ^ ch2;
+        xxor = ch1 ^ ch2;
         if (TEST_BITS(ch1, 0xFF) == 0)
         {
             ch1 &= 0xFF;
             ch2 &= 0xFF;
-            xor &= 0xFF;
+            xxor &= 0xFF;
             LengthToCompare = 0;
             break;
         }
@@ -3315,7 +3315,7 @@ Long_Ptr FASTCALL StrNCompareA(PCChar pString1, PCChar pString2, SizeT LengthToC
         {
             ch1 &= 0xFFFF;
             ch2 &= 0xFFFF;
-            xor &= 0xFFFF;
+            xxor &= 0xFFFF;
             LengthToCompare = 0;
             break;
         }
@@ -3323,7 +3323,7 @@ Long_Ptr FASTCALL StrNCompareA(PCChar pString1, PCChar pString2, SizeT LengthToC
         {
             ch1 &= 0xFFFFFF;
             ch2 &= 0xFFFFFF;
-            xor &= 0xFFFFFF;
+            xxor &= 0xFFFFFF;
             LengthToCompare = 0;
             break;
         }
@@ -3333,7 +3333,7 @@ Long_Ptr FASTCALL StrNCompareA(PCChar pString1, PCChar pString2, SizeT LengthToC
             break;
         }
 
-        if (xor)
+        if (xxor)
         {
             return ch1 < ch2 ? -1 : 1;
         }
@@ -3348,12 +3348,12 @@ Long_Ptr FASTCALL StrNCompareA(PCChar pString1, PCChar pString2, SizeT LengthToC
     {
         ch1 = *pString1++;
         ch2 = *pString2++;
-        xor = ch1 ^ ch2;
-        if (xor != 0)
+        xxor = ch1 ^ ch2;
+        if (xxor != 0)
             break;
     }
 
-    if (xor == 0)
+    if (xxor == 0)
         return 0;
 
     return ch1 < ch2 ? -1 : 1;
@@ -5286,6 +5286,8 @@ _ML_C_TAIL_
 
 #pragma warning(push, 0)
 
+#ifndef __clang__
+
 ASM VOID STDCALL sha256_update(sha256_ctx *ctx, PVOID message, ULONG len)
 {
     static ULONG sha256_k[] =
@@ -5549,6 +5551,8 @@ L049:
           ret     0xC
     }
 }
+
+#endif
 
 #pragma warning(pop)
 
@@ -10942,6 +10946,7 @@ PSYSTEM_PROCESS_INFORMATION QuerySystemProcesses()
 
 #if ML_X86
 
+#ifndef __clang__
 NAKED VOID CDECL CaptureRegisters(PML_THREAD_CONTEXT Context)
 {
     INLINE_ASM
@@ -10991,6 +10996,7 @@ VOID CDECL RegistersContext(PML_THREAD_CONTEXT Context)
 {
     ;
 }
+#endif
 
 #endif // x86
 
@@ -12758,6 +12764,7 @@ NTSTATUS OpenPredefinedKeyHandle(PHANDLE KeyHandle, HANDLE PredefinedKey, ACCESS
 #endif
 
 
+#ifndef __clang__
 #pragma push_macro("KEY_INDEX")
 #define KEY_INDEX(_Key) ((ULONG_PTR)(_Key) & ~(1 << (bitsof(LONG) - 1)))
 
@@ -12850,6 +12857,7 @@ NTSTATUS OpenPredefinedKeyHandle(PHANDLE KeyHandle, HANDLE PredefinedKey, ACCESS
     }
 
 #pragma pop_macro("KEY_INDEX")
+#endif
 
     return Status;
 }
@@ -14422,8 +14430,8 @@ CreateNamedPipe(
         return Status;
     }
 
-    *ReadPipe = LocalReadPipe;
-    *WritePipe = LocalWritePipe;
+    *ReadPipe = reinterpret_cast<HANDLE>(LocalReadPipe);
+    *WritePipe = reinterpret_cast<HANDLE>(LocalWritePipe);
 
     return Status;
 }

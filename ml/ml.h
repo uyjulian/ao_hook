@@ -700,7 +700,7 @@ inline void my_initterm(_PVFV *pfbegin, _PVFV *pfend)
 #define DR7_RW_WRITE    1
 #define DR7_RW_ACCESS   3
 
-#pragma pack(1)
+#pragma pack(push, 1)
 
 typedef union
 {
@@ -822,7 +822,7 @@ typedef union
     PULarge_Integer pULi;
 } MultiTypePointer;
 
-#pragma pack()
+#pragma pack(pop)
 
 #if !CPP_DEFINED
     typedef unsigned char bool, *pbool;
@@ -1560,6 +1560,7 @@ BinarySearch(
         template<typename ID, typename T>
         struct msvc_extract_type : msvc_extract_type<ID,msvc_extract_type_default_param>
         {
+        	template <bool> struct id2type_impl; // New template
             template<>
             struct id2type_impl<true>  //VC8.0 specific bugfeature
             {
@@ -9929,6 +9930,10 @@ void*           _ReturnAddress();
 
 #if CPP_DEFINED
 
+#ifdef __clang__
+#include <intrin.h>
+#else
+
 IF_NOT_EXIST(__stosb)
 {
     void            __cdecl __stosb(void* Dest, unsigned char Data, size_t Count);
@@ -9942,6 +9947,8 @@ IF_NOT_EXIST(__movsb)
     void            __cdecl __movsw(void *Dest, const void *Source, size_t Count);
     void            __cdecl __movsd(void *Dest, const void *Source, size_t Count);
 }
+
+#endif
 
 #endif
 
@@ -10346,7 +10353,7 @@ ForceInline LPVoid CDECL memset2(void* dest, UInt16 c, size_t count)
 
 #pragma intrinsic(memcmp, memcpy, memset)
 
-#if !defined(NOT_USE_CUSTOM_MEMFUNC) && MY_OS_WIN32
+#if !defined(NOT_USE_CUSTOM_MEMFUNC) && MY_OS_WIN32 && !defined(__clang__)
 
 #undef RtlMoveMemory
 
@@ -10401,6 +10408,31 @@ ForceInline LPVoid CDECL memset2(void* dest, UInt16 c, size_t count)
 #endif // arch
 
 //    #define memcpy my_memcpy_detect
+#else
+#undef RtlMoveMemory
+
+#ifdef ZeroMemory
+    #undef ZeroMemory
+#endif /* ZeroMemory */
+
+#ifdef CopyMemory
+    #undef CopyMemory
+#endif /* CopyMemory */
+
+#ifdef RtlCopyMemory
+    #undef RtlCopyMemory
+#endif /* RtlCopyMemory */
+
+#ifdef FillMemory
+    #undef FillMemory
+#endif // FillMemory
+
+    #define CompareMemory(Buffer1, Buffer2, SizeInBytes) memcmp((void *)(Buffer1), (void *)(Buffer2), (size_t)(SizeInBytes))
+    #define FillMemory(Destination, Length, Fill) memset(Destination, (Byte)Fill, Length)
+    #define FillMemory4(Destination, Length, Fill) memset(Destination, Fill, Length)
+    #define ZeroMemory(Destination, Length) FillMemory(Destination, Length, 0)
+    #define CopyMemory(Destination, Source, Length) memcpy((void *)(Destination), (void *)(Source), (size_t)(Length))
+    #define RtlCopyMemory CopyMemory
 #endif // NOT_USE_CUSTOM_MEMFUNC
 
 EXTC_IMPORT Void STDCALL RtlMoveMemory(PVoid Destination, PVoid Source, SizeT Length);
@@ -10420,7 +10452,7 @@ _ML_C_TAIL_
 
 _ML_C_HEAD_
 
-#pragma pack(1)
+#pragma pack(push, 1)
 
 #define SHA224_DIGEST_SIZE ( 224 / 8)
 #define SHA256_DIGEST_SIZE ( 256 / 8)
@@ -10440,7 +10472,7 @@ typedef struct
     ULONG   h[8];
 } sha256_ctx;
 
-#pragma pack()
+#pragma pack(pop)
 
 VOID STDCALL sha256_init(sha256_ctx *ctx);
 VOID STDCALL sha256_update(sha256_ctx *ctx, PVOID message, ULONG len);
@@ -10856,6 +10888,7 @@ typedef enum _KAPC_ENVIRONMENT
 
 #pragma INCLUDE_LIB(ntdll.lib)
 
+#pragma pack(push, 1)
 
 _ML_C_HEAD_
 
@@ -10981,9 +11014,9 @@ EXTCPP
     _RTL_CONSTANT_STRING_remove_const_macro(s) \
 }
 
-#if 0
+#ifdef __clang__
 
-#pragma pack(4)
+#pragma pack(push, 4)
 
 #define MAXIMUM_LEADBYTES   12
 
@@ -11009,7 +11042,7 @@ typedef struct _NLSTABLEINFO {
     PUSHORT     LowerCaseTable;             // 844 format lower case table
 } NLSTABLEINFO, *PNLSTABLEINFO;
 
-#pragma pack()
+#pragma pack(pop)
 
 #endif
 
@@ -21848,6 +21881,8 @@ FmsGetFontProperty(
 
 _ML_C_TAIL_
 
+#pragma pack(pop)
+
 
 #endif // _NATIVEAPI_H_536f1070_45de_44d7_9e53_6c5db2ff00d3
 #ifndef _UNDOCUMENTEDAPI_H_b221130a_bdd5_4b40_9da0_d44c29e1d279
@@ -24578,7 +24613,7 @@ typedef ULONG TAGID;
 typedef ULONG TAGREF, INDEXID, TAG;
 typedef PVOID HSDB;
 
-#pragma pack(1)
+#pragma pack(push, 1)
 
 typedef struct tagAPPHELP_DATA
 {
@@ -24674,7 +24709,7 @@ typedef struct
     GUID    Guid;
 } SDB_DATABASE_INFORMATION, *PSDB_DATABASE_INFORMATION;
 
-#pragma pack()
+#pragma pack(pop)
 
 EXTC_IMPORT BOOL WINAPI BaseFlushAppcompatCache();
 
@@ -26026,7 +26061,7 @@ protected:
 public:
     ForceInline NtFileDisk();
     ForceInline NtFileDisk(const NtFileDisk &file);
-    ForceInline operator HANDLE() const;
+    operator HANDLE() const;
     NtFileDisk& operator=(const NtFileDisk &file);
     NtFileDisk& operator=(HANDLE Handle);
 
@@ -27618,12 +27653,8 @@ class Pointer<HANDLE> : public PointerImpl<Pointer<HANDLE>, HANDLE>
 
     void ReleasePointer()
     {
-        switch ((ULONG_PTR)Reference)
-        {
-            case (ULONG_PTR)NtCurrentProcess():
-            case (ULONG_PTR)NtCurrentThread():
-                return;
-        }
+        if ((ULONG_PTR)Reference == (ULONG_PTR)NtCurrentProcess() || (ULONG_PTR)Reference == (ULONG_PTR)NtCurrentThread())
+        	return;
 
         ZwClose(Reference);
     }
@@ -32198,6 +32229,8 @@ ML_NAMESPACE_END_(Ob);
 
 ML_NAMESPACE_BEGIN(Gdi);
 
+#pragma pack(push, 1)
+
 typedef struct
 {
     USHORT MajorVersion;
@@ -32276,7 +32309,7 @@ typedef struct
 
 } TT_CMAP_RECORD, *PTT_CMAP_RECORD;
 
-#pragma pack()
+#pragma pack(pop)
 
 ML_NAMESPACE_END_(Gdi);
 
