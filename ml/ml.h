@@ -11014,7 +11014,7 @@ EXTCPP
     _RTL_CONSTANT_STRING_remove_const_macro(s) \
 }
 
-#ifdef __clang__
+#if 0
 
 #pragma pack(push, 4)
 
